@@ -13,6 +13,7 @@ gitHubForm.addEventListener('submit', (e) => {
     // Prevent default form submission action
     e.preventDefault();
 
+    console.log('new search...');
     // Get the GitHub username input field on the DOM
     let usernameInput = document.getElementById('usernameInput');
 
@@ -50,19 +51,21 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
     // GitHub endpoint, dynamically passing in specified username
     const url = `https://api.github.com/users/${username}`;
 
+
     // Open a new connection, using a GET request via URL endpoint
-    // Providing 3 arguments (GET/POST, The URL, Async True/False)
+    // Providing 3 arguments (GET/POST, The URL, Async true/false)
     xhr.open('GET', url, true);
-    //console.log('OPENED: ', xhr.status);
 
     // When request is received
     // Process it here
-    xhr.onload = function() {
+    xhr.onload = function()
+    {
 
         // Parse API data into JSON format
         const data = JSON.parse(this.response);
-        console.log("start of user info...")
-        console.log('REQUEST RECEIVED: ', xhr.status);
+        if (xhr.status == 404) { console.log('ERROR: ', xhr.status); }
+        else { console.log('REQUEST RECEIVED: ', xhr.status); }
+
         console.log(data)
 
         // if no user
@@ -70,24 +73,26 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
             overallInfoElement.append("user not found")
 
             // Send the request to the server
-            xhr.send();
-            return;
+            // xhr.send();
+            // return;
         } else {
             // if user exists, get total repo count info
             totalRepo = data["public_repos"];
+            // Run GitHub API function, passing in the GitHub username and includeAll checkbox
+            requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
         }
-        // Run GitHub API function, passing in the GitHub username and includeAll checkbox
-        requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
 
     }
     console.log('DONE: ', xhr.status);
     // Send the request to the server
     xhr.send();
+
 }
 
 
 function requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
+    console.log("requestUserRepos...")
     let page = 1;
     if (totalRepo > 30) {
         page = Math.floor(totalRepo / 30);
@@ -98,7 +103,7 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
     }
 
     for (let pg = 1; pg < page+1; pg++) {
-
+        //new Promise(function (resolve, reject) {
         // Create new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
 
@@ -118,13 +123,15 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
         //console.log('OPENED: ', xhr.status);
 
         // When request is received, process it here
-        xhr.onload = function () {
-
+        xhr.onload = function ()
+        {
             // Parse API data into JSON format
             const data = JSON.parse(this.response);
-
-            console.log("start of user's repo data pg = " + pg);
-            console.log('REQUEST RECEIVED: ', xhr.status);
+            if (xhr.status == 404) { console.log('ERROR: ', xhr.status); }
+            else {
+                console.log("start of user's repo data pg = " + pg);
+                console.log('REQUEST RECEIVED: ', xhr.status);
+            }
             console.log(data);
 
             // if no user
@@ -182,6 +189,7 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
         // Send the request to the server
         xhr.send();
         console.log('DONE: ', xhr.status);
+        //});
     }
 }
 
