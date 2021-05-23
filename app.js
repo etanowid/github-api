@@ -36,7 +36,6 @@ gitHubForm.addEventListener('submit', (e) => {
 
     // Run GitHub API function, passing in the GitHub username, includeAll checkbox, vars to keep track of
     requestUserInfo(gitHubUsername, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
-
 })
 
 
@@ -73,7 +72,6 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
         } else {
             // if user exists, get total repo count info
             totalRepo = data["public_repos"];
-            console.log(totalRepo);
         }
         // Run GitHub API function, passing in the GitHub username and includeAll checkbox
         requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
@@ -86,55 +84,46 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
 
 function requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
-    // Create new XMLHttpRequest object
-    const xhr = new XMLHttpRequest();
+    let page = 1;
+    if (totalRepo > 30) {
+        page = Math.floor(totalRepo / 30);
+        let leftover = totalRepo % 30;
+        if (leftover > 0) {
+            page++;
+        }
+    }
 
-    // GitHub endpoint, dynamically passing in specified username
-    const url = `https://api.github.com/users/${username}/repos`;
+    for (let pg = 1; pg < page+1; pg++) {
+        // Create new XMLHttpRequest object
+        const xhr = new XMLHttpRequest();
 
-    // Open a new connection, using a GET request via URL endpoint
-    // Providing 3 arguments (GET/POST, The URL, Async True/False)
-    xhr.open('GET', url, true);
+        // GitHub endpoint, dynamically passing in specified username
+        const url = `https://api.github.com/users/${username}/repos?page=${pg}`;
 
-    // When request is received
-    // Process it here
-    xhr.onload = function() {
+        // Open a new connection, using a GET request via URL endpoint
+        // Providing 3 arguments (GET/POST, The URL, Async True/False)
+        xhr.open('GET', url, true);
 
-        // Parse API data into JSON format
-        const data = JSON.parse(this.response);
+        // When request is received, process it here
+        xhr.onload = function () {
 
-        console.log("start of user's repo data...")
-        console.log(data)
+            // Parse API data into JSON format
+            const data = JSON.parse(this.response);
 
+            console.log("start of user's repo data pg = " + pg);
+            console.log(data);
 
-        // if no user
-        if (data.message === "Not Found") {
-            overallInfoElement.append("user not found");
-
-        } else {
-            // if user exists, get info
-
-            // if includeAll is true, include all (forked n nonforked)
-            if (includeAll) {
-                // Loop over each object in data array
-                for (let i in data) {
-                    totalStargazers += data[i].stargazers_count;
-                    totalForksCount += data[i].forks_count;
-                    totalKB += data[i].size;
-                    let topLanguage = data[i].language;
-                    // fill in languageFreq dict
-                    if (languageFreq.hasOwnProperty(topLanguage)) {
-                        languageFreq[topLanguage]++;
-                    } else {
-                        languageFreq[topLanguage] = 1;
-                    }
-                }
+            // if no user
+            if (data.message === "Not Found") {
+                overallInfoElement.append("user not found");
 
             } else {
-                // else includeAll is false, include only repos that are nonforked (fork: false)
-                // Loop over each object in data array
-                for (let i in data) {
-                    if (data[i].fork === false) {
+                // if user exists, get info
+
+                // if includeAll is true, include all (forked n nonforked)
+                if (includeAll) {
+                    // Loop over each object in data array
+                    for (let i in data) {
                         totalStargazers += data[i].stargazers_count;
                         totalForksCount += data[i].forks_count;
                         totalKB += data[i].size;
@@ -145,33 +134,73 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                         } else {
                             languageFreq[topLanguage] = 1;
                         }
-                    } else {
-                        forkedRepoCount += 1;
+                    }
+
+                } else {
+                    // else includeAll is false, include only repos that are nonforked (fork: false)
+                    // Loop over each object in data array
+                    for (let i in data) {
+                        if (data[i].fork === false) {
+                            totalStargazers += data[i].stargazers_count;
+                            totalForksCount += data[i].forks_count;
+                            totalKB += data[i].size;
+                            let topLanguage = data[i].language;
+                            // fill in languageFreq dict
+                            if (languageFreq.hasOwnProperty(topLanguage)) {
+                                languageFreq[topLanguage]++;
+                            } else {
+                                languageFreq[topLanguage] = 1;
+                            }
+                        } else {
+                            forkedRepoCount += 1;
+                        }
                     }
                 }
             }
+            collectData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+            console.log( pg + " =?= " + page);
+            if (pg == page) {
+                displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+            }
         }
-        displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+        // Send the request to the server
+        xhr.send();
     }
-    // Send the request to the server
-    xhr.send();
+
 }
+
+
+function collectData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
+{
+    console.log("collectData...");
+
+    totalStargazers += totalStargazers;
+    totalForksCount += totalForksCount;
+    totalKB += totalKB;
+    for (let lang in languageFreq) {
+        if (languageFreq.hasOwnProperty(lang)) {
+            languageFreq[lang]++;
+        } else {
+            languageFreq[lang] = 1;
+        }
+    }
+    forkedRepoCount += forkedRepoCount;
+    console.log(totalStargazers);
+}
+
 
 function displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
     console.log("displayData...");
-    console.log(totalRepo);
 
     // if includeAll is true, include all (forked n nonforked)
     if (includeAll) {
-        console.log("hi 1" + totalRepo);
         let textHTML = "<p><strong>Total repos count: " + totalRepo + "</p>";
         overallInfoElement.append(textHTML);
     } else {
         // else includeAll is false, include only repos that are nonforked (fork: false)
         // total number of nonforked repo = all repo - number of forked repo
         let repoCountNonforked = totalRepo - forkedRepoCount;
-        console.log("hi 2 " + forkedRepoCount);
         let textHTML = "<p><strong>Total repos count: " + repoCountNonforked + "</p>";
         overallInfoElement.append(textHTML);
     }
@@ -180,6 +209,7 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
     // forked nonforked stuff already handled from requestUserInfo
     let textHTML = "<p><strong>Total stargazers count: " + totalStargazers + "</p>";
     overallInfoElement.append(textHTML);
+
 
     // if includeAll is true, include all (forked n nonforked)
     if (includeAll) {
@@ -238,8 +268,6 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
 
     languageInfoElement.append(languageHTML);
 
-    // Send the request to the server
-    //xhr.send();
 }
 
 
