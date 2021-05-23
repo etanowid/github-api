@@ -1,9 +1,8 @@
 // Get the GitHub username input form
 const gitHubForm = document.getElementById('gitHubForm');
 
-// languageInfoElement corresponds to index.html's id=language_info
+// element corresponds to index.html's id = #...
 let languageInfoElement = jQuery("#language_info");
-
 let overallInfoElement = jQuery("#user_repos");
 
 
@@ -14,6 +13,7 @@ gitHubForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
     console.log('new search...');
+
     // Get the GitHub username input field on the DOM
     let usernameInput = document.getElementById('usernameInput');
 
@@ -23,10 +23,11 @@ gitHubForm.addEventListener('submit', (e) => {
     // Get the forked checkbox field, the .checked returns boolean
     let includeAll = document.getElementById('includeAll').checked;
 
-    // empty out languageInfoElement for each submit button clicked
+    // empty out all elements every time submit button clicked (new search)
     overallInfoElement.empty();
     languageInfoElement.empty();
 
+    // initialize final variables to keep track. will be added more for each request
     let totalRepo = 0;
     let totalStargazers = 0;
     let totalForksCount = 0;
@@ -36,14 +37,14 @@ gitHubForm.addEventListener('submit', (e) => {
     let languageFreq = {};
     let forkedRepoCount = 0;
 
-    // Run GitHub API function, passing in the GitHub username, includeAll checkbox, vars to keep track of
+    // Run GitHub API function to find user's number of repo, passing in the GitHub username, includeAll checkbox, vars to keep track of
     requestUserInfo(gitHubUsername, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
 })
 
 
 function requestUserInfo(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
-    console.log("requestUserInfo...")
+    console.log("requestUserInfo...");
 
     // Create new XMLHttpRequest object
     const xhr = new XMLHttpRequest();
@@ -51,18 +52,16 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
     // GitHub endpoint, dynamically passing in specified username
     const url = `https://api.github.com/users/${username}`;
 
-
     // Open a new connection, using a GET request via URL endpoint
     // Providing 3 arguments (GET/POST, The URL, Async true/false)
     xhr.open('GET', url, true);
 
-    // When request is received
-    // Process it here
+    // When request is received, process it here
     xhr.onload = function()
     {
-
         // Parse API data into JSON format
         const data = JSON.parse(this.response);
+
         if (xhr.status == 404) { console.log('ERROR: ', xhr.status); }
         else { console.log('REQUEST RECEIVED: ', xhr.status); }
 
@@ -71,28 +70,26 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
         // if no user
         if (data.message === "Not Found") {
             overallInfoElement.append("user not found")
-
-            // Send the request to the server
-            // xhr.send();
-            // return;
         } else {
             // if user exists, get total repo count info
             totalRepo = data["public_repos"];
-            // Run GitHub API function, passing in the GitHub username and includeAll checkbox
+
+            // Run GitHub API function to iterate through each repo of a user, passing in the GitHub username, includeAll checkbox, vars to keep track of
             requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
         }
-
     }
+
     console.log('DONE: ', xhr.status);
     // Send the request to the server
     xhr.send();
-
 }
 
 
 function requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
     console.log("requestUserRepos...")
+
+    // math to find the number of requests needed to fetch all repos. github max = 30 repos
     let page = 1;
     if (totalRepo > 30) {
         page = Math.floor(totalRepo / 30);
@@ -102,25 +99,28 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
         }
     }
 
-    for (let pg = 1; pg < page+1; pg++) {
+    for (let pg = 1; pg < page+1; pg++)
+    {
         //new Promise(function (resolve, reject) {
         // Create new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
 
-        // GitHub endpoint, dynamically passing in specified username
+        // GitHub endpoint, dynamically passing in specified username and pg
         const url = `https://api.github.com/users/${username}/repos?page=${pg}`;
 
-        // (username, includeAll, totalRepo, reqStargazers, reqForksCount, reqTotalKB, reqLanguageFreq, reqForkedRepoCount);
+        // param needed: (username, includeAll, totalRepo, reqStargazers, reqForksCount, reqTotalKB, reqLanguageFreq, reqForkedRepoCount);
+        // initialize temp variables (will be 0 for every new pg/request). will add these to the final vars
         let reqStargazers = 0;
         let reqForksCount = 0;
         let reqTotalKB = 0;
         let reqLanguageFreq = {};
         let reqForkedRepoCount = 0;
         let displayFlag = false;
+
         // Open a new connection, using a GET request via URL endpoint
         // Providing 3 arguments (GET/POST, The URL, Async True/False)
         xhr.open('GET', url, false);
-        //console.log('OPENED: ', xhr.status);
+
 
         // When request is received, process it here
         xhr.onload = function ()
@@ -132,6 +132,7 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                 console.log("start of user's repo data pg = " + pg);
                 console.log('REQUEST RECEIVED: ', xhr.status);
             }
+
             console.log(data);
 
             // if no user
@@ -178,14 +179,20 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                     }
                 }
             }
+
+            // if on last page, time to display the aggregated infos
             if (pg == page) {
+                // pass this var to collectData
                 displayFlag = true;
                 //displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
             }
+
+            // call collectData to add the temp var stuff to the final vars. this is to keep track of the overall data
             collectData(username, includeAll, totalRepo, reqStargazers, totalStargazers, reqForksCount, totalForksCount,
                 reqTotalKB, totalKB, reqLanguageFreq, languageFreq, reqForkedRepoCount, forkedRepoCount, displayFlag);
 
         }
+
         // Send the request to the server
         xhr.send();
         console.log('DONE: ', xhr.status);
@@ -199,6 +206,7 @@ function collectData(username, includeAll, totalRepo, reqStargazers, totalStarga
 {
     console.log("collectData...");
 
+    // update the final vars with the temp vars
     totalStargazers += reqStargazers;
     totalForksCount += reqForksCount;
     totalKB += reqTotalKB;
@@ -210,6 +218,8 @@ function collectData(username, includeAll, totalRepo, reqStargazers, totalStarga
         }
     }
     forkedRepoCount += reqForkedRepoCount;
+
+    // call displayData if it's time to display (displayFlag = true)
     if (displayFlag) {
         displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
     }
@@ -247,6 +257,7 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
         // find average size. github unit in kb
         let avgKB = totalKB / totalRepo;
         avgKB = avgKB.toFixed(2);
+
         let textHTML = "<p><strong>Average size of repo: " + avgKB + " KB</p>";
         overallInfoElement.append(textHTML);
     }else {
@@ -256,6 +267,7 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
         // find average size. github unit in kb
         let avgKB = totalKB / repoCountNonforked;
         avgKB = avgKB.toFixed(2);
+
         let textHTML = "<p><strong>Average size of repo: " + avgKB + " KB</p>";
         overallInfoElement.append(textHTML);
     }
