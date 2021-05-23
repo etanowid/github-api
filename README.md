@@ -4,7 +4,7 @@ API endpoint that returns the aggregated statistics across all of the user’s r
 <br/>
 
 ### To run:
-1. download the zip file or clone the repository: <br>
+1. download the zip file then unzip it or clone the repository: <br>
 shell> `git clone https://github.com/etanowid/github-api.git`
 2. on your machine: `github-api` -> open `index.html` on Google Chrome
 
