@@ -6,6 +6,7 @@ let languageInfoElement = jQuery("#language_info");
 
 let overallInfoElement = jQuery("#user_repos");
 
+
 // Listen for submit button on GitHub username input form
 gitHubForm.addEventListener('submit', (e) => {
 
@@ -41,6 +42,8 @@ gitHubForm.addEventListener('submit', (e) => {
 
 function requestUserInfo(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
+    console.log("requestUserInfo...")
+
     // Create new XMLHttpRequest object
     const xhr = new XMLHttpRequest();
 
@@ -50,7 +53,7 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
     // Open a new connection, using a GET request via URL endpoint
     // Providing 3 arguments (GET/POST, The URL, Async True/False)
     xhr.open('GET', url, true);
-
+    //console.log('OPENED: ', xhr.status);
 
     // When request is received
     // Process it here
@@ -58,8 +61,8 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
 
         // Parse API data into JSON format
         const data = JSON.parse(this.response);
-
         console.log("start of user info...")
+        console.log('REQUEST RECEIVED: ', xhr.status);
         console.log(data)
 
         // if no user
@@ -77,6 +80,7 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
         requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
 
     }
+    console.log('DONE: ', xhr.status);
     // Send the request to the server
     xhr.send();
 }
@@ -94,15 +98,24 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
     }
 
     for (let pg = 1; pg < page+1; pg++) {
+
         // Create new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
 
         // GitHub endpoint, dynamically passing in specified username
         const url = `https://api.github.com/users/${username}/repos?page=${pg}`;
 
+        // (username, includeAll, totalRepo, reqStargazers, reqForksCount, reqTotalKB, reqLanguageFreq, reqForkedRepoCount);
+        let reqStargazers = 0;
+        let reqForksCount = 0;
+        let reqTotalKB = 0;
+        let reqLanguageFreq = {};
+        let reqForkedRepoCount = 0;
+        let displayFlag = false;
         // Open a new connection, using a GET request via URL endpoint
         // Providing 3 arguments (GET/POST, The URL, Async True/False)
-        xhr.open('GET', url, true);
+        xhr.open('GET', url, false);
+        //console.log('OPENED: ', xhr.status);
 
         // When request is received, process it here
         xhr.onload = function () {
@@ -111,6 +124,7 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
             const data = JSON.parse(this.response);
 
             console.log("start of user's repo data pg = " + pg);
+            console.log('REQUEST RECEIVED: ', xhr.status);
             console.log(data);
 
             // if no user
@@ -124,8 +138,8 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                 if (includeAll) {
                     // Loop over each object in data array
                     for (let i in data) {
-                        totalStargazers += data[i].stargazers_count;
-                        totalForksCount += data[i].forks_count;
+                        reqStargazers += data[i].stargazers_count;
+                        reqForksCount += data[i].forks_count;
                         totalKB += data[i].size;
                         let topLanguage = data[i].language;
                         // fill in languageFreq dict
@@ -141,9 +155,9 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                     // Loop over each object in data array
                     for (let i in data) {
                         if (data[i].fork === false) {
-                            totalStargazers += data[i].stargazers_count;
-                            totalForksCount += data[i].forks_count;
-                            totalKB += data[i].size;
+                            reqStargazers += data[i].stargazers_count;
+                            reqForksCount += data[i].forks_count;
+                            reqTotalKB += data[i].size;
                             let topLanguage = data[i].language;
                             // fill in languageFreq dict
                             if (languageFreq.hasOwnProperty(topLanguage)) {
@@ -152,46 +166,51 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                                 languageFreq[topLanguage] = 1;
                             }
                         } else {
-                            forkedRepoCount += 1;
+                            reqForkedRepoCount++;
                         }
                     }
                 }
             }
-            collectData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
-            console.log( pg + " =?= " + page);
             if (pg == page) {
-                displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+                displayFlag = true;
+                //displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
             }
+            collectData(username, includeAll, totalRepo, reqStargazers, totalStargazers, reqForksCount, totalForksCount,
+                reqTotalKB, totalKB, reqLanguageFreq, languageFreq, reqForkedRepoCount, forkedRepoCount, displayFlag);
+
         }
         // Send the request to the server
         xhr.send();
+        console.log('DONE: ', xhr.status);
     }
-
 }
 
 
-function collectData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
+function collectData(username, includeAll, totalRepo, reqStargazers, totalStargazers, reqForksCount, totalForksCount,
+                     reqTotalKB, totalKB, reqLanguageFreq, languageFreq, reqForkedRepoCount, forkedRepoCount, displayFlag)
 {
     console.log("collectData...");
 
-    totalStargazers += totalStargazers;
-    totalForksCount += totalForksCount;
-    totalKB += totalKB;
-    for (let lang in languageFreq) {
+    totalStargazers += reqStargazers;
+    totalForksCount += reqForksCount;
+    totalKB += reqTotalKB;
+    for (let lang in reqLanguageFreq) {
         if (languageFreq.hasOwnProperty(lang)) {
             languageFreq[lang]++;
         } else {
             languageFreq[lang] = 1;
         }
     }
-    forkedRepoCount += forkedRepoCount;
-    console.log(totalStargazers);
+    forkedRepoCount += reqForkedRepoCount;
+    if (displayFlag) {
+        displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+    }
 }
 
 
 function displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
 {
-    console.log("displayData...");
+    console.log("displayData... yippeee!");
 
     // if includeAll is true, include all (forked n nonforked)
     if (includeAll) {
@@ -211,14 +230,8 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
     overallInfoElement.append(textHTML);
 
 
-    // if includeAll is true, include all (forked n nonforked)
-    if (includeAll) {
-        textHTML = "<p><strong>Total fork count (included): " + totalForksCount + "</p>";
-        overallInfoElement.append(textHTML);
-    }else {
-        textHTML = "<p><strong>Total fork count (not included): " + totalForksCount + "</p>";
-        overallInfoElement.append(textHTML);
-    }
+    textHTML = "<p><strong>Total fork count: " + totalForksCount + "</p>";
+    overallInfoElement.append(textHTML);
 
 
     // if includeAll is true, include all (forked n nonforked)
@@ -258,10 +271,10 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
     console.log(sortable);
 
     // prepare the HTML text to be put inside languageInfoElement
-    let languageHTML = "<p><strong>Used languages: ";
+    let languageHTML = "<p><strong>Used languages: </strong></p> <p>";
     sortable.forEach(function(item){
         if (item[0] != "null"){
-            languageHTML += item[0]+ ", " + item[1] + "\n";
+            languageHTML += item[0]+ ", used on " + item[1] + " repos\n";
             languageHTML += "</p>";
         }
     });
