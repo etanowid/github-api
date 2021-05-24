@@ -27,22 +27,20 @@ gitHubForm.addEventListener('submit', (e) => {
     overallInfoElement.empty();
     languageInfoElement.empty();
 
-    // initialize final variables to keep track. will be added more for each request
     let totalRepo = 0;
-    let totalStargazers = 0;
-    let totalForksCount = 0;
-    let totalKB = 0;
+    // initialize final variables to keep track. will be added more for each request
+    let finalDataDict = {"totalStargazers": 0, "totalForksCount": 0, "totalKB": 0, "forkedRepoCount": 0};
+
     // js object (or dictionary) to keep track of language count
     // { "Python" : 4, "CSS" : 8 , .... }
     let languageFreq = {};
-    let forkedRepoCount = 0;
 
     // Run GitHub API function to find user's number of repo, passing in the GitHub username, includeAll checkbox, vars to keep track of
-    requestUserInfo(gitHubUsername, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+    requestUserInfo(gitHubUsername, includeAll, totalRepo, finalDataDict, languageFreq);
 })
 
 
-function requestUserInfo(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
+function requestUserInfo(username, includeAll, totalRepo, finalDataDict, languageFreq)
 {
     console.log("requestUserInfo...");
 
@@ -75,7 +73,7 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
             totalRepo = data["public_repos"];
 
             // Run GitHub API function to iterate through each repo of a user, passing in the GitHub username, includeAll checkbox, vars to keep track of
-            requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+            requestUserRepos(username, includeAll, totalRepo, finalDataDict, languageFreq);
         }
     }
 
@@ -85,10 +83,11 @@ function requestUserInfo(username, includeAll, totalRepo, totalStargazers, total
 }
 
 
-function requestUserRepos(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
+function requestUserRepos(username, includeAll, totalRepo, finalDataDict, languageFreq)
 {
-    console.log("requestUserRepos...")
-
+    console.log("requestUserRepos...");
+    //let promises = [];
+    let count = 0;
     // math to find the number of requests needed to fetch all repos. github max = 30 repos
     let page = 1;
     if (totalRepo > 30) {
@@ -101,7 +100,8 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
 
     for (let pg = 1; pg < page+1; pg++)
     {
-        //new Promise(function (resolve, reject) {
+        //let p = new Promise(function(resolve,reject){
+
         // Create new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
 
@@ -110,17 +110,13 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
 
         // param needed: (username, includeAll, totalRepo, reqStargazers, reqForksCount, reqTotalKB, reqLanguageFreq, reqForkedRepoCount);
         // initialize temp variables (will be 0 for every new pg/request). will add these to the final vars
-        let reqStargazers = 0;
-        let reqForksCount = 0;
-        let reqTotalKB = 0;
-        let reqLanguageFreq = {};
-        let reqForkedRepoCount = 0;
-        let displayFlag = false;
+
+        // let reqDataDict = {"totalStargazers": 0, "totalForksCount": 0, "totalKB": 0, "forkedRepoCount": 0};
+        // let reqLanguageFreq = {};
 
         // Open a new connection, using a GET request via URL endpoint
         // Providing 3 arguments (GET/POST, The URL, Async True/False)
-        xhr.open('GET', url, false);
-
+        xhr.open('GET', url, true);
 
         // When request is received, process it here
         xhr.onload = function ()
@@ -146,9 +142,10 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                 if (includeAll) {
                     // Loop over each object in data array
                     for (let i in data) {
-                        reqStargazers += data[i].stargazers_count;
-                        reqForksCount += data[i].forks_count;
-                        totalKB += data[i].size;
+                        finalDataDict["totalStargazers"] += data[i].stargazers_count;
+                        finalDataDict["totalForksCount"] += data[i].forks_count;
+                        finalDataDict["totalKB"] += data[i].size;
+
                         let topLanguage = data[i].language;
                         // fill in languageFreq dict
                         if (languageFreq.hasOwnProperty(topLanguage)) {
@@ -163,9 +160,10 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                     // Loop over each object in data array
                     for (let i in data) {
                         if (data[i].fork === false) {
-                            reqStargazers += data[i].stargazers_count;
-                            reqForksCount += data[i].forks_count;
-                            reqTotalKB += data[i].size;
+                            finalDataDict["totalStargazers"] += data[i].stargazers_count;
+                            finalDataDict["totalForksCount"] += data[i].forks_count;
+                            finalDataDict["totalKB"] += data[i].size;
+
                             let topLanguage = data[i].language;
                             // fill in languageFreq dict
                             if (languageFreq.hasOwnProperty(topLanguage)) {
@@ -174,59 +172,47 @@ function requestUserRepos(username, includeAll, totalRepo, totalStargazers, tota
                                 languageFreq[topLanguage] = 1;
                             }
                         } else {
-                            reqForkedRepoCount++;
+                            finalDataDict["forkedRepoCount"]++;
                         }
                     }
                 }
             }
-
-            // if on last page, time to display the aggregated infos
-            if (pg == page) {
-                // pass this var to collectData
-                displayFlag = true;
-                //displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
-            }
+            count++;
 
             // call collectData to add the temp var stuff to the final vars. this is to keep track of the overall data
-            collectData(username, includeAll, totalRepo, reqStargazers, totalStargazers, reqForksCount, totalForksCount,
-                reqTotalKB, totalKB, reqLanguageFreq, languageFreq, reqForkedRepoCount, forkedRepoCount, displayFlag);
+            collectData(username, includeAll, totalRepo, finalDataDict, languageFreq, count, page);
 
         }
 
         // Send the request to the server
         xhr.send();
         console.log('DONE: ', xhr.status);
+
         //});
+        //promises.push(p);
     }
+
+    // Promise.all(promises).then(values => {
+    //     console.log("hi " + values);
+    //     displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+    // });
 }
 
 
-function collectData(username, includeAll, totalRepo, reqStargazers, totalStargazers, reqForksCount, totalForksCount,
-                     reqTotalKB, totalKB, reqLanguageFreq, languageFreq, reqForkedRepoCount, forkedRepoCount, displayFlag)
+function collectData(username, includeAll, totalRepo, finalDataDict, languageFreq, count, page)
 {
     console.log("collectData...");
 
-    // update the final vars with the temp vars
-    totalStargazers += reqStargazers;
-    totalForksCount += reqForksCount;
-    totalKB += reqTotalKB;
-    for (let lang in reqLanguageFreq) {
-        if (languageFreq.hasOwnProperty(lang)) {
-            languageFreq[lang]++;
-        } else {
-            languageFreq[lang] = 1;
-        }
-    }
-    forkedRepoCount += reqForkedRepoCount;
-
-    // call displayData if it's time to display (displayFlag = true)
-    if (displayFlag) {
-        displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount);
+    console.log(finalDataDict);
+    console.log(languageFreq);
+    // if on last page, time to display the aggregated infos
+    if (count === page) {
+        displayData(username, includeAll, totalRepo, finalDataDict, languageFreq);
     }
 }
 
 
-function displayData(username, includeAll, totalRepo, totalStargazers, totalForksCount, totalKB, languageFreq, forkedRepoCount)
+function displayData(username, includeAll, totalRepo, finalDataDict, languageFreq)
 {
     console.log("displayData... yippeee!");
 
@@ -237,25 +223,25 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
     } else {
         // else includeAll is false, include only repos that are nonforked (fork: false)
         // total number of nonforked repo = all repo - number of forked repo
-        let repoCountNonforked = totalRepo - forkedRepoCount;
+        let repoCountNonforked = totalRepo - finalDataDict["forkedRepoCount"];
         let textHTML = "<p><strong>Total repos count: " + repoCountNonforked + "</p>";
         overallInfoElement.append(textHTML);
     }
 
 
     // forked nonforked stuff already handled from requestUserInfo
-    let textHTML = "<p><strong>Total stargazers count: " + totalStargazers + "</p>";
+    let textHTML = "<p><strong>Total stargazers count: " + finalDataDict["totalStargazers"] + "</p>";
     overallInfoElement.append(textHTML);
 
 
-    textHTML = "<p><strong>Total fork count: " + totalForksCount + "</p>";
+    textHTML = "<p><strong>Total fork count: " + finalDataDict["totalForksCount"] + "</p>";
     overallInfoElement.append(textHTML);
 
 
     // if includeAll is true, include all (forked n nonforked)
     if (includeAll) {
         // find average size. github unit in kb
-        let avgKB = totalKB / totalRepo;
+        let avgKB = finalDataDict["totalKB"] / totalRepo;
         avgKB = avgKB.toFixed(2);
 
         let textHTML = "<p><strong>Average size of repo: " + avgKB + " KB</p>";
@@ -263,9 +249,9 @@ function displayData(username, includeAll, totalRepo, totalStargazers, totalFork
     }else {
         // else includeAll is false, include only repos that are nonforked (fork: false)
         // total number of nonforked repo = all repo - number of forked repo
-        let repoCountNonforked = totalRepo - forkedRepoCount;
+        let repoCountNonforked = totalRepo - finalDataDict["forkedRepoCount"];
         // find average size. github unit in kb
-        let avgKB = totalKB / repoCountNonforked;
+        let avgKB = finalDataDict["totalKB"] / repoCountNonforked;
         avgKB = avgKB.toFixed(2);
 
         let textHTML = "<p><strong>Average size of repo: " + avgKB + " KB</p>";
