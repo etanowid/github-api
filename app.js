@@ -28,6 +28,7 @@ gitHubForm.addEventListener('submit', (e) => {
     languageInfoElement.empty();
 
     let totalRepo = 0;
+
     // initialize final variables to keep track. will be added more for each request
     let finalDataDict = {"totalStargazers": 0, "totalForksCount": 0, "totalKB": 0, "forkedRepoCount": 0};
 
@@ -87,7 +88,7 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
 {
     console.log("requestUserRepos...");
     //let promises = [];
-    let count = 0;
+
     // math to find the number of requests needed to fetch all repos. github max = 30 repos
     let page = 1;
     if (totalRepo > 30) {
@@ -98,6 +99,11 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
         }
     }
 
+    // keeps track of the num of requests. incremented in onload function
+    // if count == last page, print results
+    let count = 0;
+
+    // send request for each page
     for (let pg = 1; pg < page+1; pg++)
     {
         //let p = new Promise(function(resolve,reject){
@@ -107,12 +113,6 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
 
         // GitHub endpoint, dynamically passing in specified username and pg
         const url = `https://api.github.com/users/${username}/repos?page=${pg}`;
-
-        // param needed: (username, includeAll, totalRepo, reqStargazers, reqForksCount, reqTotalKB, reqLanguageFreq, reqForkedRepoCount);
-        // initialize temp variables (will be 0 for every new pg/request). will add these to the final vars
-
-        // let reqDataDict = {"totalStargazers": 0, "totalForksCount": 0, "totalKB": 0, "forkedRepoCount": 0};
-        // let reqLanguageFreq = {};
 
         // Open a new connection, using a GET request via URL endpoint
         // Providing 3 arguments (GET/POST, The URL, Async True/False)
@@ -177,20 +177,23 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
                     }
                 }
             }
+            // increment request count here
             count++;
 
-            // call collectData to add the temp var stuff to the final vars. this is to keep track of the overall data
-            collectData(username, includeAll, totalRepo, finalDataDict, languageFreq, count, page);
+            // if request count == last page, time to display the infos
+            if (count === page) {
+                displayData(username, includeAll, totalRepo, finalDataDict, languageFreq);
+            }
 
-        }
+        } // end of xhr.onload
+
 
         // Send the request to the server
         xhr.send();
         console.log('DONE: ', xhr.status);
-
         //});
         //promises.push(p);
-    }
+    } // end of for loop
 
     // Promise.all(promises).then(values => {
     //     console.log("hi " + values);
@@ -199,22 +202,10 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
 }
 
 
-function collectData(username, includeAll, totalRepo, finalDataDict, languageFreq, count, page)
-{
-    console.log("collectData...");
-
-    console.log(finalDataDict);
-    console.log(languageFreq);
-    // if on last page, time to display the aggregated infos
-    if (count === page) {
-        displayData(username, includeAll, totalRepo, finalDataDict, languageFreq);
-    }
-}
-
-
 function displayData(username, includeAll, totalRepo, finalDataDict, languageFreq)
 {
     console.log("displayData... yippeee!");
+
 
     // if includeAll is true, include all (forked n nonforked)
     if (includeAll) {
@@ -223,8 +214,8 @@ function displayData(username, includeAll, totalRepo, finalDataDict, languageFre
     } else {
         // else includeAll is false, include only repos that are nonforked (fork: false)
         // total number of nonforked repo = all repo - number of forked repo
-        let repoCountNonforked = totalRepo - finalDataDict["forkedRepoCount"];
-        let textHTML = "<p><strong>Total repos count: " + repoCountNonforked + "</p>";
+        let nonforkedRepoCount = totalRepo - finalDataDict["forkedRepoCount"];
+        let textHTML = "<p><strong>Total repos count: " + nonforkedRepoCount + "</p>";
         overallInfoElement.append(textHTML);
     }
 
@@ -249,9 +240,9 @@ function displayData(username, includeAll, totalRepo, finalDataDict, languageFre
     }else {
         // else includeAll is false, include only repos that are nonforked (fork: false)
         // total number of nonforked repo = all repo - number of forked repo
-        let repoCountNonforked = totalRepo - finalDataDict["forkedRepoCount"];
+        let nonforkedRepoCount = totalRepo - finalDataDict["forkedRepoCount"];
         // find average size. github unit in kb
-        let avgKB = finalDataDict["totalKB"] / repoCountNonforked;
+        let avgKB = finalDataDict["totalKB"] / nonforkedRepoCount;
         avgKB = avgKB.toFixed(2);
 
         let textHTML = "<p><strong>Average size of repo: " + avgKB + " KB</p>";
