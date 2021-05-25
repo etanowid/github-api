@@ -25,6 +25,15 @@ gitHubForm.addEventListener('submit', (e) => {
     // Get the value of the GitHub username input field and removes trailing whitespaces
     let gitHubUsername = usernameInput.value.trim();
 
+    // handles empty username
+    if (gitHubUsername == '') {
+        // empty out all elements every time submit button clicked (new search)
+        overallInfoElement.empty();
+        languageInfoElement.empty();
+        overallInfoElement.append("please provide a username");
+        return;
+    }
+
     // Get the forked checkbox field, the .checked returns boolean
     let includeAll = document.getElementById('includeAll').checked;
 
@@ -76,7 +85,7 @@ function requestUserInfo(username, includeAll, totalRepo, finalDataDict, languag
 
         // if no user
         if (data.message === "Not Found") {
-            overallInfoElement.append("user not found")
+            overallInfoElement.append("user not found");
         } else {
             // if user exists, get total repo count info
             totalRepo = data["public_repos"];
