@@ -1,8 +1,10 @@
 # Simple Web App with the GitHub API
 
-API endpoint that returns the aggregated statistics across a user’s GitHub repositories given a username. Allows filtering down to just non-forked repositories. 
+API endpoint that returns the aggregated statistics across a user’s GitHub repositories given a username. Allows filtering down to just non-forked repositories. <br>
+<br>
+note: GitHub API has requests limit (60 req/hr). Please don't submit too many requests in a short period of time. Thank you! :^)
 <br/>
-
+<br/>
 
 ### Access from web browser (preferably Google Chrome):
 1. On the url bar, type: <br>
