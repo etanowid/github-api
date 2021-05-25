@@ -12,17 +12,18 @@
 </head>
 <h5 style="color:slategray;">Edriana Tanowidjaja</h5>
 <body>
-    <h3 class="text-center mt-5">GitHub API</h3>
-    <form id="gitHubForm"  class="mx-auto" style="width: 280px; text-align:center;">
-        <input id="usernameInput" class="form-control mb-5" type="text" name="username" placeholder="Enter GitHub Username">
-        <div><label for="includeAll">include forked repo </label>
+<h3 class="text-center mt-5">GitHub API</h3>
+<form id="gitHubForm"  class="mx-auto" style="width: 280px; text-align:center;">
+    <input id="usernameInput" class="form-control mb-5" type="text" name="username" placeholder="Enter GitHub Username">
+    <div><label for="includeAll">include forked repo </label>
         <input type="checkbox" id="includeAll" name="includeAll" value="includeAll" style="text-align:center;"></div>
-        <input type="submit" class="btn btn-primary ml-2 mb-5" value="Submit">
-        <br>
-    </form>
+    <input type="reset" class="btn btn-outline-info" value="Reset" onclick="resetButton()" >
+    <input type="submit" class="btn btn-outline-info" value="Submit">
+    <br> <br>
+</form>
 
-    <p id="user_repos" class="mx-auto" style="width: 280px; text-align:center;"></p>
-    <p id="language_info" class="mx-auto" style="width: 280px; text-align:center;"></p>
+<p id="user_repos" class="mx-auto" style="width: 280px; text-align:center;"></p>
+<p id="language_info" class="mx-auto" style="width: 280px; text-align:center;"></p>
 
 <!--    &lt;!&ndash; The core Firebase JS SDK is always required and must be listed first &ndash;&gt;-->
 <!--    <script src="/__/firebase/8.6.2/firebase-app.js"></script>-->
@@ -34,13 +35,13 @@
 <!--    &lt;!&ndash; Initialize Firebase &ndash;&gt;-->
 <!--    <script src="/__/firebase/init.js"></script>-->
 
-    <!-- jquery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<!-- jquery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
 
 
-    <!-- my js file -->
-    <script src="app.js"></script>
+<!-- my js file -->
+<script src="app.js"></script>
 </body>
 
 </html>

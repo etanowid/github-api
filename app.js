@@ -5,6 +5,11 @@ const gitHubForm = document.getElementById('gitHubForm');
 let languageInfoElement = jQuery("#language_info");
 let overallInfoElement = jQuery("#user_repos");
 
+function resetButton() {
+    // empty out all elements every time reset button clicked
+    overallInfoElement.empty();
+    languageInfoElement.empty();
+}
 
 // Listen for submit button on GitHub username input form
 gitHubForm.addEventListener('submit', (e) => {
@@ -17,8 +22,8 @@ gitHubForm.addEventListener('submit', (e) => {
     // Get the GitHub username input field on the DOM
     let usernameInput = document.getElementById('usernameInput');
 
-    // Get the value of the GitHub username input field
-    let gitHubUsername = usernameInput.value;
+    // Get the value of the GitHub username input field and removes trailing whitespaces
+    let gitHubUsername = usernameInput.value.trim();
 
     // Get the forked checkbox field, the .checked returns boolean
     let includeAll = document.getElementById('includeAll').checked;
@@ -61,8 +66,11 @@ function requestUserInfo(username, includeAll, totalRepo, finalDataDict, languag
         // Parse API data into JSON format
         const data = JSON.parse(this.response);
 
-        if (xhr.status == 404) { console.log('ERROR: ', xhr.status); }
-        else { console.log('REQUEST RECEIVED: ', xhr.status); }
+        if (xhr.status == 404) {
+            console.log('ERROR: ', xhr.status);
+        } else {
+            console.log('REQUEST RECEIVED: ', xhr.status);
+        }
 
         console.log(data)
 
@@ -123,8 +131,9 @@ function requestUserRepos(username, includeAll, totalRepo, finalDataDict, langua
         {
             // Parse API data into JSON format
             const data = JSON.parse(this.response);
-            if (xhr.status == 404) { console.log('ERROR: ', xhr.status); }
-            else {
+            if (xhr.status == 404) {
+                console.log('ERROR: ', xhr.status);
+            } else {
                 console.log("start of user's repo data pg = " + pg);
                 console.log('REQUEST RECEIVED: ', xhr.status);
             }
@@ -277,7 +286,6 @@ function displayData(username, includeAll, totalRepo, finalDataDict, languageFre
     });
 
     languageInfoElement.append(languageHTML);
-
 }
 
 
