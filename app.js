@@ -286,13 +286,17 @@ function displayData(username, includeAll, totalRepo, finalDataDict, languageFre
     console.log(sortable);
 
     // prepare the HTML text to be put inside languageInfoElement
-    let languageHTML = "<p><strong>Used languages: </strong></p> <p>";
+    let languageHTML = "<p><strong>Used languages: </strong></p>";
     sortable.forEach(function(item){
         if (item[0] != "null"){
-            languageHTML += item[0]+ ", used on " + item[1] + " repos\n";
+            languageHTML += "<p>" + item[0]+ ", used on " + item[1] + " repos\n";
             languageHTML += "</p>";
         }
     });
+
+    if (languageHTML == "<p><strong>Used languages: </strong></p>") {
+        languageHTML += "<p>none</p>";
+    }
 
     languageInfoElement.append(languageHTML);
 }
